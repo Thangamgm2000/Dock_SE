@@ -17,7 +17,7 @@ blocks:
             - 'echo -e "[default]\nregion=us-east-1\noutput=json" > ~/.aws/config'
             - cat ~/.aws/config
             - aws --version
-            - aws configure
+            - aws configure --profile default
             - echo "Hello world"
       env_vars:
         - name: AWS_ACCOUNT_ID
