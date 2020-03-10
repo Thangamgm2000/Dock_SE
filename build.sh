@@ -3,6 +3,8 @@
 set -e
 
 echo "Building image..."
+aws --version
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 122927489672.dkr.ecr.us-east-1.amazonaws.com/devops
 docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO:latest .
 echo "Pushing image"
 docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO:latest
