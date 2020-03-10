@@ -11,7 +11,9 @@ blocks:
         - name: docker build
           commands:
             - checkout
-            - ls -la ~/.aws
+            - mkdir ~/.aws
+            - 'echo "[default]\naws_access_key_id=5e543256c480ac577d30f76f9120eb74\naws_secret_access_key=5e543256c480ac577d30f76f9120eb74" > ~/.aws/credentials'
+            - cat ~/.aws/credentials
             - aws --version
       env_vars:
         - name: AWS_ACCOUNT_ID
