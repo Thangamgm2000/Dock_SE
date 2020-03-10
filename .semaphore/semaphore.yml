@@ -11,6 +11,7 @@ blocks:
         - name: docker build
           commands:
             - checkout
+            - aws --version
       env_vars:
         - name: AWS_ACCOUNT_ID
           value: '122927489672'
