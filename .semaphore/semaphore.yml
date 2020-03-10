@@ -14,7 +14,11 @@ blocks:
             - mkdir ~/.aws
             - 'echo -e "[default]\naws_access_key_id=5e543256c480ac577d30f76f9120eb74\naws_secret_access_key=5e543256c480ac577d30f76f9120eb74" > ~/.aws/credentials'
             - cat ~/.aws/credentials
+            - 'echo -e "[default]\nregion=us-east-1\noutput=json" > ~/.aws/config'
+            - cat ~/.aws/config
             - aws --version
+            - aws configure
+            - echo "Hello world"
       env_vars:
         - name: AWS_ACCOUNT_ID
           value: '122927489672'
