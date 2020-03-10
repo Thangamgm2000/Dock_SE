@@ -11,4 +11,12 @@ blocks:
         - name: docker build
           commands:
             - checkout
-            - docker build -t your-image .
+      env_vars:
+        - name: AWS_ACCOUNT_ID
+          value: '122927489672'
+        - name: AWS_DEFAULT_REGION
+          value: us-east-1
+        - name: IMAGE_REPO
+          value: devops
+        - name: STACK_NAME
+          value: SemaphoreCI
