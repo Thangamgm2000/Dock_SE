@@ -12,6 +12,7 @@ blocks:
           commands:
             - checkout
             - aws --version
+            - aws configure --region us-east-1 --output json
       env_vars:
         - name: AWS_ACCOUNT_ID
           value: '122927489672'
