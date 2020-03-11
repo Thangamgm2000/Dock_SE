@@ -27,8 +27,5 @@ blocks:
           value: devops
         - name: STACK_NAME
           value: SemaphoreCI
-      epilogue:
-        always:
-          commands:
-            - chmod +x ./build.sh
-            - ./build.sh
+      secrets:
+        - name: aws_dets
