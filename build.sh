@@ -10,7 +10,7 @@ echo "Pushing image"
 docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO:latest
 echo "Updating CFN"
 aws cloudformation update-stack --stack-name $STACK_NAME --use-previous-template --capabilities CAPABILITY_IAM \
-  --parameters ParameterKey=DockerImageURL,ParameterValue=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO:$REVISION \
+  --parameters ParameterKey=DockerImageURL,ParameterValue=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO:latest \
   ParameterKey=DesiredCapacity,UsePreviousValue=true \
   ParameterKey=InstanceType,UsePreviousValue=true \
   ParameterKey=MaxSize,UsePreviousValue=true \
