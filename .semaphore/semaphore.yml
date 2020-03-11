@@ -11,6 +11,11 @@ blocks:
         - name: docker build
           commands:
             - checkout
+            - mkdir ~/.aws
+            - 'echo -e "[default]\naws_access_key_id=$AWS_ACCESS_KEY_ID\naws_secret_access_key=$AWS_SECRET_ACCESS_KEY" > ~/.aws/credentials'
+            - cat ~/.aws/credentials
+            - 'echo -e "[default]\nregion=us-east-1\noutput=json" > ~/.aws/config'
+            - cat ~/.aws/config
             - aws --version
             - echo "Hello world"
       env_vars:
