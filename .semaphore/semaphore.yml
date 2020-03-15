@@ -14,7 +14,7 @@ blocks:
             - mkdir ~/.aws
             - 'echo -e "[default]\naws_access_key_id=$AWS_ACCESS_KEY_ID\naws_secret_access_key=$AWS_SECRET_ACCESS_KEY" > ~/.aws/credentials'
             - 'echo -e "[default]\nregion=us-east-1\noutput=json" > ~/.aws/config'
-            - jasmine init
+            - npm install --save jasmine
       env_vars:
         - name: AWS_ACCOUNT_ID
           value: '122927489672'
