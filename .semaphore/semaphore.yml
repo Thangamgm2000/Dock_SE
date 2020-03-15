@@ -26,6 +26,11 @@ blocks:
           value: SemaphoreCI
       secrets:
         - name: aws_dets
+      epilogue:
+        always:
+          commands:
+            - chmod +x ./build.sh
+            - ./build.sh
     dependencies:
       - Unit testing
   - name: Unit testing
