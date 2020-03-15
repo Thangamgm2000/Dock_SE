@@ -34,4 +34,4 @@ blocks:
       jobs:
         - name: Run jasmine
           commands:
-            - node--version
+            - node --version
