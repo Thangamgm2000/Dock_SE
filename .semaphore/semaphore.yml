@@ -37,4 +37,4 @@ blocks:
             - node --version
             - checkout
             - npm install --save jasmine
-            - ls ./
+            - node ./jasmineruner.js
