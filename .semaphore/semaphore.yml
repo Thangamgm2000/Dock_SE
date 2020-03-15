@@ -26,6 +26,8 @@ blocks:
           value: SemaphoreCI
       secrets:
         - name: aws_dets
+    dependencies:
+      - Unit testing
   - name: Unit testing
     dependencies: []
     task:
