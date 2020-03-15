@@ -1,10 +1,13 @@
-from flask import Flask, render_template, request, redirect, session, url_for, send_file
+from flask import Flask, render_template, request, redirect, session, url_for, send_file, Response
 import requests
 from flask_table import Table, Col, LinkCol
 import random
 import csv,os
 app = Flask(__name__)
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+
+#SERVER_URL = "http://localhost:8001"
+SERVER_URL = "https://kxt4vjniid.execute-api.us-east-1.amazonaws.com/prod"
 
 
 class AdminTable(Table):
@@ -24,8 +27,16 @@ class UserTable(Table):
     cname = Col('Course Name')
     prefs = Col('Preference')
 
+class StatsTable(Table):
+    cname = Col('Course Name')
+    count = Col('# of Students Opted')
 
-def dupli_locate(lst,con):
+class AttTable(Table):
+    roll = Col('Roll Number')
+    name = Col('Student Name')
+
+
+def dupli_locate(lst):
     test_list = lst
     con = [0]*9
     oc_set = set()
@@ -41,7 +52,7 @@ def dupli_locate(lst,con):
 
 def generate_admintable():
     global cname,atabledata
-    res = requests.get("https://kxt4vjniid.execute-api.us-east-1.amazonaws.com/prod/getallprefs").json()
+    res = requests.get(SERVER_URL + "/getallprefs").json()
     myname = []
     for i in cname:
         ns = i.replace(' ', '_')
@@ -70,7 +81,7 @@ def generate_admintable():
 def generate_usertable():
     global cname,prefs,utabledata
     try:
-        prefs = requests.post("https://kxt4vjniid.execute-api.us-east-1.amazonaws.com/prod/getprefs", data={'roll':session["roll"]}).json()[0]['prefs'].split()
+        prefs = requests.post(SERVER_URL + "/getprefs", data={'roll':session["roll"]}).json()[0]['prefs'].split()
         print(session["roll"])
         print("Look",prefs)
         first = zip(cname, prefs)
@@ -84,7 +95,7 @@ def generate_usertable():
         utabledata = []
 
 
-prefetch = requests.get("https://kxt4vjniid.execute-api.us-east-1.amazonaws.com/prod/prefetch").json()
+prefetch = requests.get(SERVER_URL + "/prefetch").json()
 cid = []
 cname = []
 cdesc = []
@@ -95,15 +106,15 @@ pref_assigned = [0]*5
 def pref_assign_fetch():
     global pref_assigned
     pref_assigned = [0]*5
-    res = requests.get("https://kxt4vjniid.execute-api.us-east-1.amazonaws.com/prod/getallprefs").json()
+    res = requests.get(SERVER_URL + "/getallprefs").json()
     vals = []
     for row in res:
         vals.append(list(row.values()))
     roll = [row[0] for row in vals]
     i=0
     for row in roll:
-        print(requests.post("https://kxt4vjniid.execute-api.us-east-1.amazonaws.com/prod/getprefassigned",data={'roll':row}).json()[0]['exists'])
-        pref_assigned[i]=requests.post("https://kxt4vjniid.execute-api.us-east-1.amazonaws.com/prod/getprefassigned",data={'roll':row}).json()[0]['exists']
+        print(requests.post(SERVER_URL+"/getprefassigned",data={'roll':row}).json()[0]['exists'])
+        pref_assigned[i]=requests.post(SERVER_URL+"/getprefassigned",data={'roll':row}).json()[0]['exists']
         i+=1
 
 errstring = ""
@@ -117,7 +128,7 @@ print(cname)
 def seats_fetch():
     global seats_left
     seats_left = []
-    seatsfetch = requests.get("https://kxt4vjniid.execute-api.us-east-1.amazonaws.com/prod/seatsfetch").json()
+    seatsfetch = requests.get(SERVER_URL+"/seatsfetch").json()
     for row in seatsfetch:
         seats_left.append(row['seats_left'])
 
@@ -127,6 +138,8 @@ conflict = [0]*9
 utabledata = []
 atabledata = []
 consoletable = None
+attendance_for=''
+
 @app.route("/")
 def index():
     idx = [0, 1, 2, 3, 4, 5, 6, 7, 8]
@@ -156,23 +169,41 @@ def index():
 
 @app.route("/admindownload")
 def admindownload():
-    keys = atabledata[0].keys()
-    with open('admintable.csv','w') as file:
-        dict_writer = csv.DictWriter(file, keys)
-        dict_writer.writeheader()
-        dict_writer.writerows(atabledata)
-    print("File written")
-    return send_file("admintable.csv", filename="admin.csv", as_attachment=True)
+    try:
+        keys = atabledata[0].keys()
+        csv = ''
+        for key in keys:
+            csv+=key+','
+        csv = csv[:-1]
+        csv+='\n'
+        for i in range(len(atabledata)):
+            val = list(atabledata[i].values())
+            csv += val[0] + ',' + val[1] + ',' + val[2] + ',' + val[3] + ',' + val[4] + ',' + val[5] + ',' + val[6] + ',' + val[7] + ',' + val[8] + ',' + val[9] + '\n'
+        return Response(
+            csv,
+            mimetype="text/csv",
+            headers={"Content-disposition": "attachment; filename=AllPrefs.csv"}
+        )
+
+    except:
+        return redirect(url_for('admin_console'))
 
 @app.route("/userdownload")
 def userdownload():
     keys = utabledata[0].keys()
-    with open('usertable.csv','w') as file:
-        dict_writer = csv.DictWriter(file, keys)
-        dict_writer.writeheader()
-        dict_writer.writerows(utabledata)
-    print("File written")
-    return send_file("usertable.csv", filename="hello.csv", as_attachment=True)
+    csv = ''
+    for key in keys:
+        csv+=key+','
+    csv = csv[:-1]
+    csv+='\n'
+    for i in range(len(utabledata)):
+        val = list(utabledata[i].values())
+        csv+=val[0]+','+val[1]+'\n'
+    return Response(
+        csv,
+        mimetype="text/csv",
+        headers = {"Content-disposition":"attachment; filename=MyPrefs.csv"}
+    )
 
 @app.route("/regular_page")
 def regular_page():
@@ -183,12 +214,12 @@ def regular_page():
             return render_template("regular-page.html", table=admintable, admin=1, logged=0)
         generate_usertable()
         usertable = UserTable(utabledata, no_items="You haven't filled prefs yet!")
-        check = requests.post("https://kxt4vjniid.execute-api.us-east-1.amazonaws.com/prod/getprefname", data={'roll': session["roll"]}).json()
+        check = requests.post(SERVER_URL+"/getprefname", data={'roll': session["roll"]}).json()
         if len(check)!=0:
             text = "You have been assigned " + check[0]['cname'] + " as your elective!"
             return render_template("regular-page.html", table=usertable, admin=0, logged=1, assigned=text)
         else:
-            check = requests.post("https://kxt4vjniid.execute-api.us-east-1.amazonaws.com/prod/getprefsubmitted", data={'roll': session["roll"]}).json()[0]['exists']
+            check = requests.post(SERVER_URL+"/getprefsubmitted", data={'roll': session["roll"]}).json()[0]['exists']
             if check == 1:
                 text = "You have committed your preferences. Wait for admin to assign"
                 return render_template("regular-page.html", table=usertable, admin=0, logged=1, assigned=text)
@@ -213,13 +244,13 @@ def courses():
         admin = 0
     seats_fetch()
     if 'name' in session:
-        check = requests.post("https://kxt4vjniid.execute-api.us-east-1.amazonaws.com/prod/getprefname", data={'roll': session["roll"]}).json()
+        check = requests.post(SERVER_URL+"/getprefname", data={'roll': session["roll"]}).json()
         if len(check) != 0:
             text = "You have been assigned " + check[0]['cname'] + " as your elective!"
             return render_template("courses.html", cid=cid, cname=cname, cdesc=cdesc, seats_left=seats_left, logged=logged,
                                    prefs=prefs, conflict=conflict, admin=admin, errstring=errstring, assigned=text)
         else:
-            check = requests.post("https://kxt4vjniid.execute-api.us-east-1.amazonaws.com/prod/getprefsubmitted", data={'roll': session["roll"]}).json()[0][
+            check = requests.post(SERVER_URL+"/getprefsubmitted", data={'roll': session["roll"]}).json()[0][
                 'exists']
             if check == 1:
                 text = "You have committed your preferences. Wait for admin to assign"
@@ -251,14 +282,14 @@ def verify_user():
     errstring = ""
     console_err = ""
     payload = {'roll': request.form['roll'], 'spass': request.form['spass']}
-    res = requests.post("https://kxt4vjniid.execute-api.us-east-1.amazonaws.com/prod/verify", data=payload).json()
+    res = requests.post(SERVER_URL+"/verify", data=payload).json()
     print(res['name'])
     print(len(res['name']))
     if len(res['name']) != 0:
         session["name"] = res['name']
         session["roll"] = request.form['roll']
         payload = {'roll':session['roll']}
-        preferences = requests.post("https://kxt4vjniid.execute-api.us-east-1.amazonaws.com/prod/getprefs", data=payload).json()
+        preferences = requests.post(SERVER_URL+"/getprefs", data=payload).json()
         try:
             preferences = preferences[0]['prefs'].split()
             print(preferences)
@@ -282,17 +313,98 @@ def process_prefs():
     prefs[idx] = request.form[key]
     print(prefs)
     global conflict
-    conflict = dupli_locate(prefs, conflict)
+    conflict = dupli_locate(prefs)
     print(conflict)
     return redirect(url_for('courses'))
+
+@app.route("/attendance")
+def attendance_page():
+    if "name" in session and session["name"] == 'Administrator':
+        return render_template("attendance-page.html")
+    else:
+        return redirect(url_for('index'))
+
+@app.route("/generate_attendance", methods=['POST'])
+def generate_attendance():
+    global attendance_for
+    attendance_for = request.form['sub']
+    report = requests.post(SERVER_URL + "/genattendance", data={'sub':request.form['sub']}).json()
+    attable = AttTable(report)
+    return render_template("attendance-page.html", report=attable, subname=request.form['sub'])
+
+@app.route("/attdownload")
+def attdownload():
+    attable = requests.post(SERVER_URL + "/genattendance", data={'sub': attendance_for}).json()
+    keys = attable[0].keys()
+    csv = ''
+    for key in keys:
+        csv+=key + ','
+    csv = csv[:-1]
+    csv+='\n'
+    for i in range(len(attable)):
+        val = attable[i].values()
+        for v in val:
+            csv+=v + ','
+        csv = csv[:-1]
+        csv +='\n'
+    return Response(
+        csv,
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename="+attendance_for.replace(' ','_')+"_Attendance.csv"}
+    )
+
+@app.route("/statsdownload")
+def statsdownload():
+    statstable = requests.get(SERVER_URL + "/getstats").json()
+
+    keys = statstable[0].keys()
+    csv = ''
+    for key in keys:
+        csv += key + ','
+    csv = csv[:-1]
+    csv += '\n'
+    for i in range(len(statstable)):
+        val = statstable[i].values()
+        for v in val:
+            csv += str(v) + ','
+        csv = csv[:-1]
+        csv += '\n'
+    return Response(
+        csv,
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename=StudentStats.csv"}
+    )
+
+
+@app.route("/stats_page")
+def stats_page():
+    if "name" in session and session["name"] == 'Administrator':
+        stats = requests.get(SERVER_URL + "/getstats").json()
+        print(stats)
+        stats_table = StatsTable(stats)
+        return render_template("stats-page.html", table=stats_table)
+    else:
+        return redirect(url_for('index'))
+
+@app.route("/add_course")
+def add_course():
+    if "name" in session and session["name"] == 'Administrator':
+        return render_template("add-course.html")
+    else:
+        return redirect(url_for('index'))
+
+@app.route("/add_course_proc", methods=["POST"])
+def add_course_proc():
+    return render_template("submitted.html",cname=request.form['cname'])
+
 
 @app.route("/assignpref")
 def assignpref():
     global console_err
     payload = {'roll': request.args.get('roll')}
-    check = requests.post("https://kxt4vjniid.execute-api.us-east-1.amazonaws.com/prod/getprefassigned", data={'roll': payload['roll']}).json()[0]['exists']
+    check = requests.post(SERVER_URL+"/getprefassigned", data={'roll': payload['roll']}).json()[0]['exists']
     if check != 1:
-        preferences = requests.post("https://kxt4vjniid.execute-api.us-east-1.amazonaws.com/prod/getprefs", data=payload).json()
+        preferences = requests.post(SERVER_URL+"/getprefs", data=payload).json()
         try:
             preferences = preferences[0]['prefs'].split()
             i = 1
@@ -305,7 +417,7 @@ def assignpref():
 
             print("assigning",payload['roll'],"preference",cname[idx])
             payload = {'roll':payload['roll'],'cname':cname[idx]}
-            requests.post("https://kxt4vjniid.execute-api.us-east-1.amazonaws.com/prod/assignpref", data=payload)
+            requests.post(SERVER_URL+"/assignpref", data=payload)
             seats_fetch()
             pref_assign_fetch()
         except:
@@ -325,7 +437,7 @@ class ConsoleTable(Table):
 @app.route("/admin_console")
 def admin_console():
     global consoletable,console_err
-    res = requests.get("https://kxt4vjniid.execute-api.us-east-1.amazonaws.com/prod/getallprefs").json()
+    res = requests.get(SERVER_URL+"/getallprefs").json()
     vals = []
     for row in res:
         vals.append(list(row.values()))
@@ -344,7 +456,7 @@ def admin_console():
 @app.route("/commit_prefs")
 def commit_prefs():
     if 'name' in session:
-        check = requests.post("https://kxt4vjniid.execute-api.us-east-1.amazonaws.com/prod/getprefsubmitted", data={'roll': session["roll"]}).json()[0][
+        check = requests.post(SERVER_URL+"/getprefsubmitted", data={'roll': session["roll"]}).json()[0][
             'exists']
         if check == 0:
             global errstring
@@ -363,7 +475,7 @@ def commit_prefs():
                 else:
                     roll = session["roll"]
                     payload = {'srno':roll, 'prefs':string}
-                    requests.post("https://kxt4vjniid.execute-api.us-east-1.amazonaws.com/prod/commit_prefs", data=payload)
+                    requests.post(SERVER_URL+"/commit_prefs", data=payload)
                     generate_usertable()
                     errstring = ""
             else:
@@ -376,4 +488,4 @@ def commit_prefs():
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0',port=3000)
+    app.run(debug=True)
