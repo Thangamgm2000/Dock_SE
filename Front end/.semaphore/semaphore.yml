@@ -5,7 +5,7 @@ agent:
     type: e1-standard-2
     os_image: ubuntu1804
 blocks:
-  - name: Build
+  - name: Deployment
     task:
       jobs:
         - name: docker build
@@ -26,3 +26,12 @@ blocks:
           value: SemaphoreCI
       secrets:
         - name: aws_dets
+    dependencies:
+      - Unit testing
+  - name: Unit testing
+    dependencies: []
+    task:
+      jobs:
+        - name: Run jasmine
+          commands:
+            - node --version
