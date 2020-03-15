@@ -35,5 +35,6 @@ blocks:
         - name: Run jasmine
           commands:
             - node --version
+            - checkout
             - npm install --save jasmine
             - ls ./
