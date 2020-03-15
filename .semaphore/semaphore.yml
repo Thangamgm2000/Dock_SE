@@ -35,4 +35,4 @@ blocks:
           commands:
             - node --version
             - npm install --save jasmine
-            - jasmine
+            - ls
