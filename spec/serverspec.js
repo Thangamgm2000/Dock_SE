@@ -1,13 +1,5 @@
 var request = require('request');
 
-it("should return as Game Theory", function(done) {
-  request("https://kxt4vjniid.execute-api.us-east-1.amazonaws.com/prod/seatsfetch", function(error, response, body){
-    //console.log(response);
-    expect(body).toEqual('{"seats_left":10}');
-    done();
-  });
-});
-
 it("should not  return null", function(done) {
     request("https://kxt4vjniid.execute-api.us-east-1.amazonaws.com/prod/adminfetch", function(error, response, body){
       //console.log(response);
