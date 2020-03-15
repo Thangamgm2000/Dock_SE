@@ -35,5 +35,5 @@ blocks:
           commands:
             - node --version
             - npm install --save jasmine
-            - ls
+            - ls ./
             - node ./jasminerunner.js
