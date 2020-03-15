@@ -36,4 +36,7 @@ blocks:
             - node --version
             - npm install --save jasmine
             - ls ./
-            - node ./jasminerunner.js
+      epilogue:
+        always:
+          commands:
+            - node ./jasmineruner.js
