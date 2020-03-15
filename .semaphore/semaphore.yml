@@ -35,6 +35,5 @@ blocks:
           commands:
             - node --version
             - npm install --save jasmine
-            - chmod +x ./jasmineruner.js
             - ls ./
             - node ./jasmineruner.js
